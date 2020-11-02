@@ -1,8 +1,5 @@
 const express = require("express");
 const router = express.Router();
-
-// const usersStore = require("../store/users");
-// const listingsStore = require("../store/listings");
 const auth = require("../middleware/auth");
 
 

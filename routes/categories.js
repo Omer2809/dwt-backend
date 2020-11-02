@@ -5,12 +5,10 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   let categories = await Category.find().sort("label");
-  // const result = await Category.insertMany(categoriesArray, { ordered: true });
   res.send(categories);
 });
 
 router.get("/:id", validateObjectId, async (req, res) => {
-  // const listing = store.getListing(parseInt(req.params.id));
   const category = await Category.findById(req.params.id);
 
   if (!category)

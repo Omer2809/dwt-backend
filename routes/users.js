@@ -106,8 +106,6 @@ router.put(
       }
     );
 
-    console.log("user after put:", user);
-
     res.status(201).send(user);
   }
 );

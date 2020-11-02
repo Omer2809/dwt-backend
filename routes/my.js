@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// const listingsStore = require("../store/listings");
-// const auth = require("../middleware/auth");
 const listingMapper = require("../mappers/listings");
 const auth = require("../middleware/auth");
 const { Listing } = require("../models/listing");

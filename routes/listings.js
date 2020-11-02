@@ -110,8 +110,6 @@ router.post(
     if (req.body.location) listing.location = JSON.parse(req.body.location);
 
     listing = new Listing(listing);
-    console.log("in add new listing ", listing);
-
     await listing.save();
     // const result = await Listing.insertMany(listingsArray, { ordered: true });
     res.status(201).send(listing);
@@ -164,16 +162,11 @@ router.put(
           .map((fileName) => ({ fileName: fileName }))
       : req.images.map((fileName) => ({ fileName: fileName }));
 
-    console.log("listing.images:", listing.images);
-
     if (req.body.location) listing.location = JSON.parse(req.body.location);
 
-    console.log("listing put before:", listing);
     listing = await Listing.findByIdAndUpdate(req.params.id, listing, {
       new: true,
     });
-
-    console.log("listing after put:", listing);
 
     res.status(201).send(listing);
   }

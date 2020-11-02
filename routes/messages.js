@@ -4,9 +4,6 @@ const Joi = require("joi");
 const { Expo } = require("expo-server-sdk");
 
 const listingMapper = require("../mappers/listings");
-const usersStore = require("../store/users");
-const listingsStore = require("../store/listings");
-const messagesStore = require("../store/messages");
 const sendPushNotification = require("../utilities/pushNotifications");
 const auth = require("../middleware/auth");
 const validateWith = require("../middleware/validation");
@@ -71,13 +68,9 @@ router.post("/", [auth, validateWith(schema)], async (req, res) => {
     },
     content: message,
   });
-  console.log("images:", messagee.listing.images);
-
   await messagee.save();
 
-  console.log(targetUser);
   const { expoPushToken } = targetUser;
-  console.log(expoPushToken);
 
   if (Expo.isExpoPushToken(expoPushToken)) {
     console.log("sending msg inside");
