@@ -4,7 +4,6 @@ const Joi = require("joi");
 Joi.objectId = require("joi-objectid")(Joi);
 const multer = require("multer");
 
-const categoriesStore = require("../store/categories");
 const validateWith = require("../middleware/validation");
 const auth = require("../middleware/auth");
 const imageResize = require("../middleware/imageResize");
@@ -37,21 +36,28 @@ const schema = {
 function getObjects(item) {
   return item._doc;
 }
+function getImages(item) {
+  return item.added_by;
+}
+
+function getlistingss(item) {
+  return { ...item, added_by: listingMapper(item.added_by._doc) };
+}
 
 router.get("/", async (req, res) => {
-  let listings = await Listing.find().sort("title");
-  const resources = listings.map(getObjects).map(listingMapper);
-  res.send(resources);
+  let listings = await Listing.find().sort("-createdAt");
+  listings = listings.map(getObjects).map(listingMapper).map(getlistingss);
+  res.send(listings);
 });
 
 router.get("/:id", validateObjectId, async (req, res) => {
-  // const listing = store.getListing(parseInt(req.params.id));
   const listing = await Listing.findById(req.params.id);
 
   if (!listing)
     return res.status(404).send("The listing with the given ID was not found.");
 
-  const resource = listingMapper(listing._doc);
+  let resource = listingMapper(listing._doc);
+  resource.added_by = listingMapper(resource.added_by._doc);
   res.send(resource);
 });
 
@@ -77,12 +83,16 @@ router.post(
     const user = await User.findById(req.body.userId);
     if (!user) return res.status(400).send("Invalid user.");
 
+    let count = await Listing.find({
+      "added_by._id": user._id,
+    }).countDocuments();
+
     let listing = {
       title: req.body.title,
       price: parseFloat(req.body.price),
       categoryId: {
         _id: category._id,
-        label: category.label,
+        label: category.label, 
         icon: category.icon,
         backgroundColor: category.backgroundColor,
       },
@@ -91,9 +101,11 @@ router.post(
         _id: user._id,
         name: user.name,
         email: user.email,
+        images: user.profileImage,
+        listingCount: count + 1,
       },
     };
-    console.log("req images:", req.images);
+
     listing.images = req.images.map((fileName) => ({ fileName: fileName }));
     if (req.body.location) listing.location = JSON.parse(req.body.location);
 
@@ -123,6 +135,10 @@ router.put(
     const user = await User.findById(req.body.userId);
     if (!user) return res.status(400).send("Invalid user.");
 
+    let count = await Listing.find({
+      "added_by._id": user._id,
+    }).countDocuments();
+
     let listing = {
       title: req.body.title,
       price: parseFloat(req.body.price),
@@ -137,9 +153,11 @@ router.put(
         _id: user._id,
         name: user.name,
         email: user.email,
+        images: user.profileImage,
+        listingCount: count,
       },
     };
-    
+
     listing.images = req.body.oldImages
       ? req.images
           .concat(JSON.parse(req.body.oldImages))

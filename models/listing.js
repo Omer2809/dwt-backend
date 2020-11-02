@@ -29,7 +29,7 @@ const listingSchema = new mongoose.Schema(
         },
         backgroundColor: {
           type: String,
-        }
+        },
       }),
     },
     images: [
@@ -48,6 +48,14 @@ const listingSchema = new mongoose.Schema(
         },
         email: {
           type: String,
+        },
+        images: [
+          {
+            fileName: { type: String, default: "", trim: true },
+          },
+        ],
+        listingCount: {
+          type: Number,
         },
       }),
     },

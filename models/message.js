@@ -11,6 +11,11 @@ const messageSchema = new mongoose.Schema(
         email: {
           type: String,
         },
+        images: [
+          {
+            fileName: { type: String, default: "", trim: true },
+          },
+        ],
       }),
     },
     toUser: {

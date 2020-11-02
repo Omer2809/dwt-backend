@@ -20,8 +20,17 @@ const schema = {
   userId: Joi.objectId().required(),
 };
 
+function getlistingss(item) {
+  return { ...item, fromUser: listingMapper(item.fromUser._doc) };
+}
+
+function getObjects(item) {
+  return item._doc;
+}
+
 router.get("/", auth, async (req, res) => {
-  const messages = await Message.find().sort("createdAt");
+  let messages = await Message.find().sort("-createdAt");
+  messages = messages.map(getObjects).map(getlistingss);
   res.send(messages);
 });
 
@@ -29,34 +38,24 @@ router.post("/", [auth, validateWith(schema)], async (req, res) => {
   const { listingId, message, userId } = req.body;
   console.log(req.body);
 
-  // const listing = listingsStore.getListing(listingId);
-  // if (!listing) return res.status(400).send({ error: "Invalid listingId." });
   let listing = await Listing.findById(listingId);
   if (!listing) return res.status(400).send("Invalid listing.");
   listing = listingMapper(listing._doc);
-  // console.log("after map listing", listing);
+
   console.log("after map listing image", listing.images);
 
-  // const targetUser = usersStore.getUserById(parseInt(listing.userId));
-  // if (!targetUser) return res.status(400).send({ error: "Invalid userId." });
   const targetUser = await User.findById(listing.added_by._id);
   if (!targetUser) return res.status(400).send("Invalid user.");
 
   const fromUser = await User.findById(userId);
   if (!fromUser) return res.status(400).send("Invalid user.");
 
-  // messagesStore.add({
-  //   fromUserId: req.user.userId,
-  //   toUserId: listing.userId,
-  //   listingId,
-  //   content: message,
-  // });
-
   let messagee = new Message({
     fromUser: {
       _id: fromUser._id,
       name: fromUser.name,
       email: fromUser.email,
+      images: fromUser.profileImage,
     },
     toUser: {
       _id: targetUser._id,
@@ -72,7 +71,7 @@ router.post("/", [auth, validateWith(schema)], async (req, res) => {
     },
     content: message,
   });
-  console.log("images:",messagee.listing.images);
+  console.log("images:", messagee.listing.images);
 
   await messagee.save();
 

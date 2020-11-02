@@ -8,6 +8,8 @@ const multer = require("multer");
 const validateObjectId = require("../middleware/validateObjectId");
 const config = require("config");
 const imageResize = require("../middleware/imageResize");
+const listingMapper = require("../mappers/listings");
+const { Message } = require("../models/message");
 
 const upload = multer({
   dest: "uploads/",
@@ -44,13 +46,8 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  // const userId = parseInt(req.params.id);
   const user = await User.findById(req.params.id);
   if (!user) return res.status(400).send("Invalid user.");
-
-  // const listings = listingsStore.filterListings(
-  //   listing => listing.userId === userId
-  // );
 
   const listings = await Listing.find({
     added_by: { _id: user._id },
@@ -87,6 +84,28 @@ router.put(
       new: true,
     });
 
+    const listings = await Listing.updateMany(
+      {
+        "added_by._id": user._id,
+      },
+      {
+        $set: {
+          "added_by.images": user.profileImage,
+        },
+      }
+    );
+
+    await Message.updateMany(
+      {
+        "fromUser._id": user._id,
+      },
+      {
+        $set: {
+          "fromUser.images": user.profileImage,
+        },
+      }
+    );
+
     console.log("user after put:", user);
 
     res.status(201).send(user);
@@ -104,14 +123,46 @@ router.put("/deleteProfileImage/:id", validateObjectId, async (req, res) => {
   };
 
   user.profileImage = [];
-
   user = await User.findByIdAndUpdate(req.params.id, user, {
     new: true,
   });
 
-  console.log("user after delte profile image:", user);
+  const listings = await Listing.updateMany(
+    {
+      "added_by._id": user._id,
+    },
+    {
+      $set: {
+        "added_by.images": user.profileImage,
+      },
+    }
+  );
+
+  await Message.updateMany(
+    {
+      "fromUser._id": user._id,
+    },
+    {
+      $set: {
+        "fromUser.images": user.profileImage,
+      },
+    }
+  );
 
   res.status(201).send(user);
+});
+
+router.get("/userProfile/:id", async (req, res) => {
+  const userStored = await User.findById(req.params.id);
+  if (!userStored) return res.status(400).send("Invalid user.");
+
+  let user = {
+    name: userStored.name,
+    email: userStored.email,
+    images: userStored.profileImage,
+  };
+  user = listingMapper(user);
+  res.send(user);
 });
 
 module.exports = router;
