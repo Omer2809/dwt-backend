@@ -84,7 +84,7 @@ router.put(
       new: true,
     });
 
-    const listings = await Listing.updateMany(
+    await Listing.updateMany(
       {
         "added_by._id": user._id,
       },

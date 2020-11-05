@@ -14,6 +14,7 @@ const { Listing } = require("../models/listing");
 const validateObjectId = require("../middleware/validateObjectId");
 const { User } = require("../models/user");
 const { Category } = require("../models/categories");
+const { Favorite } = require("../models/favorite");
 
 const upload = multer({
   dest: "uploads/",
@@ -56,6 +57,7 @@ router.get("/:id", validateObjectId, async (req, res) => {
   if (!listing)
     return res.status(404).send("The listing with the given ID was not found.");
 
+  
   let resource = listingMapper(listing._doc);
   resource.added_by = listingMapper(resource.added_by._doc);
   res.send(resource);
@@ -92,7 +94,7 @@ router.post(
       price: parseFloat(req.body.price),
       categoryId: {
         _id: category._id,
-        label: category.label, 
+        label: category.label,
         icon: category.icon,
         backgroundColor: category.backgroundColor,
       },
@@ -111,6 +113,18 @@ router.post(
 
     listing = new Listing(listing);
     await listing.save();
+
+    await Listing.updateMany(
+      {
+        "added_by._id": user._id,
+      },
+      {
+        $set: {
+          "added_by.listingCount": count + 1,
+        },
+      }
+    );
+
     // const result = await Listing.insertMany(listingsArray, { ordered: true });
     res.status(201).send(listing);
   }
@@ -177,6 +191,10 @@ router.delete("/:id", async (req, res) => {
 
   if (!listing)
     return res.status(404).send("The listing with the given ID was not found.");
+
+  await Favorite.deleteMany({
+    "listing._id": listing._id,
+  });
 
   res.status(201).send(listing);
 });

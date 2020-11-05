@@ -6,6 +6,7 @@ const users = require("../routes/users");
 const auth = require("../routes/auth");
 const my = require("../routes/my");
 const messages = require("../routes/messages");
+const favorites = require("../routes/favorites");
 const expoPushTokens = require("../routes/expoPushTokens");
 const error = require("../middleware/error");
 
@@ -30,7 +31,7 @@ module.exports = function (app) {
 
   app.use("/api/categories", categories);
   app.use("/api/listings", listings);
-  // app.use("/api/user", user);
+  app.use("/api/favorites", favorites);
   app.use("/api/users", users);
   app.use("/api/auth", auth);
   app.use("/api/my", my);
