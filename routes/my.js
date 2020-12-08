@@ -71,4 +71,20 @@ router.get("/messages/send", auth, async (req, res) => {
   res.send(messages);
 });
 
+router.post("/chat", auth, async (req, res) => {
+  const user = await User.findById(req.user.userId);
+  if (!user) return res.status(400).send("Invalid user.");
+  console.log(req.body);
+  
+  let messages = await Message.find({
+    "fromUser._id": user._id,
+    "toUser._id": req.body.toUserId,
+    "listing._id": req.body.listingId,
+  }).sort("-createdAt");
+  console.log(messages);
+
+  messages = messages.map(getObjects).map(getMessages);
+  res.send(messages);
+});
+
 module.exports = router;

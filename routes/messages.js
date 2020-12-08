@@ -73,9 +73,57 @@ router.post("/", [auth, validateWith(schema)], async (req, res) => {
   const { expoPushToken } = targetUser;
 
   if (Expo.isExpoPushToken(expoPushToken)) {
-    console.log("sending msg inside");
     await sendPushNotification(expoPushToken, message);
-    console.log("sent done...");
+    // console.log("sent done...");
+  }
+
+  res.status(201).send();
+});
+
+router.post("/reply", auth, async (req, res) => {
+  const { listingId, message, fromId,toId } = req.body;
+  console.log(req.body);
+
+  let listing = await Listing.findById(listingId);
+  if (!listing) return res.status(400).send("Invalid listing.");
+  listing = listingMapper(listing._doc);
+
+  console.log("after map listing image", listing.images);
+
+  const targetUser = await User.findById(toId);
+  if (!targetUser) return res.status(400).send("Invalid user.");
+
+  const fromUser = await User.findById(fromId);
+  if (!fromUser) return res.status(400).send("Invalid user.");
+
+  let messagee = new Message({
+    fromUser: {
+      _id: fromUser._id,
+      name: fromUser.name,
+      email: fromUser.email,
+      images: fromUser.profileImage,
+    },
+    toUser: {
+      _id: targetUser._id,
+      name: targetUser.name,
+      email: targetUser.email,
+    },
+    listing: {
+      _id: listing._id,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price,
+      images: listing.images,
+    },
+    content: message,
+  });
+  await messagee.save();
+
+  const { expoPushToken } = targetUser;
+
+  if (Expo.isExpoPushToken(expoPushToken)) {
+    await sendPushNotification(expoPushToken, message);
+    // console.log("sent done...");
   }
 
   res.status(201).send();
