@@ -71,20 +71,81 @@ router.get("/messages/send", auth, async (req, res) => {
   res.send(messages);
 });
 
-router.post("/chat", auth, async (req, res) => {
-  const user = await User.findById(req.user.userId);
-  if (!user) return res.status(400).send("Invalid user.");
-  console.log(req.body);
-  
+// { "fromUserId":"5f8706c516f3a20f68f984bf", "listingId":"6085c45a45655a23f028ca8d","toUserId":"5f87082516f3a20f68f984c1" }
+
+router.post("/chat", async (req, res) => {
+  // const user = await User.findById(req.user.userId);
+  // if (!user) return res.status(400).send("Invalid user.");
+  // console.log(req.body);
+  // {$or:[{region: "NA"},{sector:"Some Sector"}]
+  const { fromUserId, toUserId, listingId } = req.body;
+
   let messages = await Message.find({
-    "fromUser._id": user._id,
-    "toUser._id": req.body.toUserId,
-    "listing._id": req.body.listingId,
-  }).sort("-createdAt");
+    $or: [
+      {
+        "fromUser._id": fromUserId,
+        "toUser._id": toUserId,
+        "listing._id": listingId,
+      },
+      {
+        "fromUser._id": toUserId,
+        "toUser._id": fromUserId,
+        "listing._id": listingId,
+      },
+    ],
+  }).sort("createdAt");
+
   console.log(messages);
 
   messages = messages.map(getObjects).map(getMessages);
+
   res.send(messages);
+});
+
+router.delete("/chat/:id",auth, async (req, res) => {
+  const message = await Message.findById(req.params.id);
+
+  if (!message)
+    return res.status(404).send("The message with the given ID was not found.");
+
+  console.log(req.user);
+  
+  const user = await User.findById(req.user.userId);
+
+  // await Favorite.deleteMany({
+  //   "listing._id": listing._id,
+  // });
+  const user2Id =
+    user._id === message.fromUser._id
+      ? message.toUser._id
+      : message.fromUser._id;
+
+  messages = await Message.updateMany(
+    {
+      $or: [
+        {
+          "fromUser._id": user._id,
+          "toUser._id": user2Id,
+          "listing._id": message.listing._id,
+        },
+        {
+          "fromUser._id": user2Id,
+          "toUser._id": user._id,
+          "listing._id": message.listing._id,
+        },
+      ],
+    },
+    {
+      $pull: {
+        participants: { name: user.name },
+      },
+    }
+  );
+
+  //cleaning
+  await Message.deleteMany({ participants: { $exists: true, $eq: [] } });
+
+  res.status(201).send(message);
 });
 
 module.exports = router;

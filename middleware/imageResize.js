@@ -7,12 +7,14 @@ const outputFolder = "public/assets";
 module.exports = async (req, res, next) => {
   const images = [];
 
+  console.log("in image resize",req.files);
   const resizePromises = req.files.map(async (file) => {
     await sharp(file.path)
       .resize(2000)
       .jpeg({ quality: 50 })
       .toFile(path.resolve(outputFolder, file.filename + "_full.jpg"));
-
+      console.log("in image resize",file);
+      
     await sharp(file.path)
       .resize(100)
       .jpeg({ quality: 30 })

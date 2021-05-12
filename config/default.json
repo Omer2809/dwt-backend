@@ -1,6 +1,6 @@
 {
   "db": "mongodb://localhost/dwtnode",
   "delay": 1000,
-  "maxImageCount": 3,
-  "jwtPrivateKey": "123"
+  "maxImageCount": 4,
+  "jwtPrivateKey": ""
 }

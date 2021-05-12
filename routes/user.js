@@ -16,6 +16,7 @@ router.get("/:id",async (req, res) => {
     id: user.id,
     name: user.name,
     email: user.email,
+    image:profileImage,
     listings 
   });
 });

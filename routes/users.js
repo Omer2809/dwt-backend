@@ -30,7 +30,7 @@ router.post("/", async (req, res) => {
     return res.status(400).send("A user with the given email already exists.");
 
   const { name, email, password } = req.body;
-  user = new User({ name, email, password });
+  user = new User({ name, email, password, profileImage: [] });
 
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
@@ -38,11 +38,23 @@ router.post("/", async (req, res) => {
   await user.save();
 
   const token = jwt.sign(
-    { userId: user.id, name: user.name, email: user.email },
+    {
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.profileImage,
+    },
     "jwtPrivateKey"
   );
 
-  res.status(201).send(token);
+  res
+    .status(201)
+    .header("x-auth-token", token)
+    .header("access-control-expose-headers", "x-auth-token")
+    .send(token);
+  // .send(_.pick(user, ['_id', 'name', 'email']));
+
+  // res.status(201).send(token);
 });
 
 router.get("/:id", async (req, res) => {
@@ -69,8 +81,11 @@ router.put(
     imageResize,
   ],
   async (req, res) => {
+    console.log(req.params.id);
     const userStored = await User.findById(req.params.id);
     if (!userStored) return res.status(400).send("Invalid user.");
+
+    console.log(req.body,"in post profileimage");
 
     let user = {
       name: userStored.name,
@@ -114,6 +129,8 @@ router.put("/deleteProfileImage/:id", validateObjectId, async (req, res) => {
   const userStored = await User.findById(req.params.id);
   if (!userStored) return res.status(400).send("Invalid user.");
 
+  console.log("delete");
+
   let user = {
     name: userStored.name,
     email: userStored.email,
@@ -125,7 +142,7 @@ router.put("/deleteProfileImage/:id", validateObjectId, async (req, res) => {
     new: true,
   });
 
-  const listings = await Listing.updateMany(
+  await Listing.updateMany(
     {
       "added_by._id": user._id,
     },
@@ -153,6 +170,7 @@ router.put("/deleteProfileImage/:id", validateObjectId, async (req, res) => {
 router.get("/userProfile/:id", async (req, res) => {
   const userStored = await User.findById(req.params.id);
   if (!userStored) return res.status(400).send("Invalid user.");
+  console.log("get imge");
 
   let user = {
     name: userStored.name,
@@ -161,6 +179,10 @@ router.get("/userProfile/:id", async (req, res) => {
   };
   user = listingMapper(user);
   res.send(user);
+});
+
+router.post("/dummy", async (req, res) => {
+  res.status(201).send({});
 });
 
 module.exports = router;

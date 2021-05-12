@@ -24,9 +24,14 @@ const upload = multer({
 const schema = {
   title: Joi.string().required(),
   description: Joi.string().allow(""),
+  bidding: Joi.string().allow(""),
+  bidder: Joi.string().allow(""),
   price: Joi.number().required().min(1),
+  days: Joi.number(),
   categoryId: Joi.objectId(),
   userId: Joi.objectId(),
+  // images:Joi.array().items(Joi.string()).optional(),
+  images: Joi.string().allow(""),
   location: Joi.object({
     latitude: Joi.number(),
     longitude: Joi.number(),
@@ -57,7 +62,6 @@ router.get("/:id", validateObjectId, async (req, res) => {
   if (!listing)
     return res.status(404).send("The listing with the given ID was not found.");
 
-  
   let resource = listingMapper(listing._doc);
   resource.added_by = listingMapper(resource.added_by._doc);
   res.send(resource);
@@ -99,6 +103,7 @@ router.post(
         backgroundColor: category.backgroundColor,
       },
       description: req.body.description,
+      bidding: req.body.bidding,
       added_by: {
         _id: user._id,
         name: user.name,
@@ -108,7 +113,13 @@ router.post(
       },
     };
 
+    if (req.body.days) listing.days = req.body.days;
+
+
+    console.log("req.images:",req.images);
     listing.images = req.images.map((fileName) => ({ fileName: fileName }));
+    console.log("listing.images:",listing.images);
+
     if (req.body.location) listing.location = JSON.parse(req.body.location);
 
     listing = new Listing(listing);
@@ -125,6 +136,7 @@ router.post(
       }
     );
 
+    console.log("IN post last:" + listing);
     // const result = await Listing.insertMany(listingsArray, { ordered: true });
     res.status(201).send(listing);
   }
@@ -139,7 +151,7 @@ router.put(
     imageResize,
   ],
   async (req, res) => {
-    console.log("req body", req.body);
+    console.log("in put req body", req.body);
 
     const category = await Category.findById(req.body.categoryId);
     if (!category) return res.status(400).send("Invalid category.");
@@ -161,6 +173,9 @@ router.put(
         backgroundColor: category.backgroundColor,
       },
       description: req.body.description,
+      bidding: req.body.bidding,
+      bidder: req.body.bidder,
+      days: req.body.days,
       added_by: {
         _id: user._id,
         name: user.name,
@@ -169,12 +184,17 @@ router.put(
         listingCount: count,
       },
     };
-
+    console.log(req.body.oldImages);
+    console.log(JSON.parse(req.body.oldImages));
+    console.log(req.images);
+    
     listing.images = req.body.oldImages
-      ? req.images
-          .concat(JSON.parse(req.body.oldImages))
-          .map((fileName) => ({ fileName: fileName }))
-      : req.images.map((fileName) => ({ fileName: fileName }));
+    ? req.images
+    .concat(JSON.parse(req.body.oldImages))
+    .map((fileName) => ({ fileName: fileName }))
+    : req.images.map((fileName) => ({ fileName: fileName }));
+    
+    console.log(listing.images);
 
     if (req.body.location) listing.location = JSON.parse(req.body.location);
 
@@ -182,6 +202,7 @@ router.put(
       new: true,
     });
 
+    console.log("IN put last:" + listing);
     res.status(201).send(listing);
   }
 );
@@ -197,6 +218,32 @@ router.delete("/:id", async (req, res) => {
   });
 
   res.status(201).send(listing);
+});
+
+router.post("/updatePrice", auth, async (req, res) => {
+  const { listingId, userId, bid } = req.body;
+  console.log("update bid req boday", req.body);
+
+  let listing = await Listing.findById(listingId);
+  if (!listing) return res.status(400).send("Invalid listing.");
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(400).send("Invalid user.");
+
+  listing = await Listing.update(
+    {
+      _id: listing._id,
+    },
+    {
+      $set: {
+        price: bid,
+        bidder: user.name,
+      },
+    }
+  );
+
+  console.log("updated listing:", listing);
+  res.status(201).send();
 });
 
 module.exports = router;

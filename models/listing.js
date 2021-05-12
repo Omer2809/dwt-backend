@@ -19,6 +19,23 @@ const listingSchema = new mongoose.Schema(
       min: 1,
       max: 1000000,
     },
+    days: {
+      type: Number,
+      // required: true,
+      min: 0,
+      max: 1000,
+      default: 0,
+    },
+    bidding: {
+      type: String,
+      // required: true,
+      default: "No",
+    },
+    bidder: {
+      type: String,
+      // required: true,
+      default: "none",
+    },
     categoryId: {
       type: new mongoose.Schema({
         label: {

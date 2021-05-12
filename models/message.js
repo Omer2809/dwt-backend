@@ -50,6 +50,7 @@ const messageSchema = new mongoose.Schema(
     content: {
       type: String,
     },
+    participants: [{ name: { type: String } }],
   },
   {
     timestamps: true,

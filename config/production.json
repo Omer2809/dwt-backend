@@ -1,5 +1,5 @@
 {
-  "assetsBaseUrl": "https://moshbucket1.s3.us-east-2.amazonaws.com/",
+  "assetsBaseUrl": "dwt_assetsBaseUrl",
   "jwtPrivateKey": "dwt_jwtPrivateKey",
   "db":"dwt_db"
 }

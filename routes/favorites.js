@@ -21,7 +21,7 @@ router.get("/", auth, async (req, res) => {
 
 router.post("/", [auth, validateWith(schema)], async (req, res) => {
   const { listingId, userId } = req.body;
-  console.log(req.body);
+  // console.log(req.body);
 
   let listing = await Listing.findById(listingId);
   if (!listing) return res.status(400).send("Invalid listing.");
@@ -46,21 +46,21 @@ router.post("/", [auth, validateWith(schema)], async (req, res) => {
   });
   await favorite.save();
 
-  console.log("added to favorated:", favorite);
+  // console.log("added to favorated:", favorite);
   res.status(201).send();
 });
 
 router.post("/favorited", auth, async (req, res) => {
   const { listingId, userId } = req.body;
-  console.log(req.body);
-  console.log(listingId, userId);
+  // console.log(req.body);
+  // console.log(listingId, userId);
 
   const favorite = await Favorite.find({
     "favorited_by._id": userId,
     "listing._id": listingId,
   });
 
-  console.log("check favorated:", favorite);
+  // console.log("check favorated:", favorite);
 
   res.send(favorite);
 });
